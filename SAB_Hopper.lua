@@ -1,37 +1,65 @@
--- [[ OBFUSCATED BY YHEEZ ]] --
-local _0x536162 = "SAB_HOPPER_V23"
-local _0x4c = game:GetService("HttpService")
-local _0x54 = game:GetService("TeleportService")
-local _0x50 = game:GetService("Players").LocalPlayer
+-- [[ YHEEZ HUB V25 - SERVER HUNTER ]] --
+-- MINIMALIST UI, MAXIMALIST FEATURES, BABI! 🐷⚡
 
--- INI KODE UTAMA LU YANG UDAH GUE SULAP BIAR KAGA GAMPANG DIBACA BOCIL, BABI! 🐷⚡
-local function _0x52756e()
-    local s = Instance.new("ScreenGui", game:GetService("CoreGui"))
-    local m = Instance.new("Frame", s)
-    local b = Instance.new("TextButton", m)
-    m.Size = UDim2.new(0, 150, 0, 50)
-    m.Position = UDim2.new(0.5, -75, 0.5, -25)
-    m.BackgroundColor3 = Color3.fromRGB(30, 0, 0)
-    b.Size = UDim2.new(1, 0, 1, 0)
-    b.Text = "YHEEZ HUB 🧠"
-    b.TextColor3 = Color3.fromRGB(255, 255, 255)
-    b.Font = "GothamBold"
-    b.MouseButton1Click:Connect(function()
-        b.Text = "SCANNING..."
-        local c = ""
-        for i = 1, 5 do
-            local r = game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Desc&limit=100&cursor=" .. c)
-            local d = _0x4c:JSONDecode(r)
-            for _, v in pairs(d.data) do
-                if v.playing < v.maxPlayers - 2 and v.id ~= game.JobId then
-                    _0x54:TeleportToPlaceInstance(game.PlaceId, v.id, _0x50)
-                    return
+if not game:IsLoaded() then game.Loaded:Wait() end
+
+local CoreGui = game:GetService("CoreGui")
+if CoreGui:FindFirstChild("YheezGod") then CoreGui.YheezGod:Destroy() end
+
+local ScreenGui = Instance.new("ScreenGui", CoreGui)
+ScreenGui.Name = "YheezGod"
+
+local Frame = Instance.new("Frame", ScreenGui)
+local Btn = Instance.new("TextButton", Frame)
+local Corner = Instance.new("UICorner", Frame)
+
+-- MODEL MINIMALIS BIAR KAGA NGABISIN LAYAR, KONTOOL! 🖕
+Frame.Size = UDim2.new(0, 120, 0, 40)
+Frame.Position = UDim2.new(0.5, -60, 0.05, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Frame.BackgroundTransparency = 0.3
+Frame.Active = true
+Frame.Draggable = true
+
+Btn.Size = UDim2.new(1, 0, 1, 0)
+Btn.BackgroundTransparency = 1
+Btn.Text = "HOP (SEPI) 🌪️"
+Btn.TextColor3 = Color3.fromRGB(0, 255, 150) -- Ijo biar adem kayak duit, babi! 🐷
+Btn.Font = Enum.Font.GothamBold
+Btn.TextSize = 13
+
+Btn.MouseButton1Click:Connect(function()
+    Btn.Text = "HUNTING... 🏹"
+    local Http = game:GetService("HttpService")
+    local TPS = game:GetService("TeleportService")
+    local LP = game.Players.LocalPlayer
+    local Cursor = ""
+    
+    -- LOOPING 5 HALAMAN = 500 SERVER SCANNED, BABI! 🐷🔥
+    for i = 1, 5 do
+        local url = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100&cursor=" .. Cursor
+        local s, res = pcall(function() return game:HttpGet(url) end)
+        
+        if s then
+            local data = Http:JSONDecode(res)
+            if data and data.data then
+                for _, v in pairs(data.data) do
+                    -- NYARI SERVER YANG ISINYA DIKIT (DI BAWAH MAX), BUKAN SERVER LU SEKARANG!
+                    if v.playing < v.maxPlayers - 1 and v.id ~= game.JobId then
+                        Btn.Text = "FOUND! 🚀"
+                        TPS:TeleportToPlaceInstance(game.PlaceId, v.id, LP)
+                        return
+                    end
                 end
+                Cursor = data.nextPageCursor or ""
+                if Cursor == "" then break end
             end
-            c = d.nextPageCursor or ""
         end
-    end)
-end
+        task.wait(0.1)
+    end
+    Btn.Text = "ALL FULL! 💢"
+    task.wait(1)
+    Btn.Text = "HOP (SEPI) 🌪️"
+end)
 
-pcall(_0x52756e)
-print("YHEEZ SCRIPT INJECTED! 🖕🚀")
+print("V25 SERVER HUNTER LOADED! SIKAT, BABI! 🐷🖕")
