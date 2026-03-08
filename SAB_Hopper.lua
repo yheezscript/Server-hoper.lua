@@ -1,53 +1,63 @@
-local TeleportService = game:GetService("TeleportService")
-local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
+-- --- KONFIGURASI ---
+local URL_SCRIPT = "https://raw.githubusercontent.com/yheezscript/Server-hoper.lua/refs/heads/main/SAB_Hopper.lua"
 
-local player = Players.LocalPlayer
-local button = script.Parent
+-- --- FUNGSI AUTO LOAD ---
+-- Script ini akan berjalan otomatis saat dieksekusi
+local function executeHopper()
+    local success, err = pcall(function()
+        loadstring(game:HttpGet(URL_SCRIPT))()
+    end)
+    if not success then
+        warn("Gagal memuat script: " .. tostring(err))
+    end
+end
 
--- --- TAMPILAN (Tetap di posisi merah) ---
-button.Size = UDim2.new(0, 160, 0, 35)
-button.Position = UDim2.new(0.02, 0, 0.22, 0)
-button.AnchorPoint = Vector2.new(0, 0.5)
+-- --- MEMBUAT GUI (BIAR MUNCUL DI DELTA) ---
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "DeltaHopGui"
+screenGui.Parent = game:GetService("CoreGui") -- Menggunakan CoreGui agar tidak hilang/error
+screenGui.ResetOnSpawn = false
+
+local button = Instance.new("TextButton")
+button.Name = "HopButton"
+button.Parent = screenGui
+
+-- Menyesuaikan posisi ke kotak merah (Kiri Atas)
+button.Size = UDim2.new(0, 140, 0, 35)
+button.Position = UDim2.new(0.02, 0, 0.22, 0) -- Sesuai screenshot kamu
 button.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+button.BorderSizePixel = 0
 button.Text = "HOP SERVER (3x)"
 button.TextColor3 = Color3.fromRGB(255, 255, 255)
 button.Font = Enum.Font.GothamBold
-button.TextSize = 14
+button.TextSize = 12
+
+-- Variasi Tampilan (Corner & Stroke)
+local corner = Instance.new("UICorner", button)
+corner.CornerRadius = UDim.new(0, 6)
 
 local stroke = Instance.new("UIStroke", button)
-stroke.Thickness = 1.5
-stroke.Color = Color3.fromRGB(255, 0, 0)
-Instance.new("UICorner", button).CornerRadius = UDim.new(0, 6)
+stroke.Thickness = 1.8
+stroke.Color = Color3.fromRGB(255, 0, 0) -- Merah
 
--- --- LOGIKA MULTI-HOP (3 KALI PERCOBAAN) ---
-local function startMultiHop()
-	button.Text = "Mencoba 3 Server..."
-	button.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
-	
-	-- Menjalankan script eksternal dari GitHub yang kamu berikan
-	-- Script SAB_Hopper biasanya sudah punya sistem antrian sendiri
-	local function exec()
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/yheezscript/Server-hoper.lua/refs/heads/main/SAB_Hopper.lua"))()
-	end
+-- --- LOGIKA KLIK (3X TRY) ---
+button.MouseButton1Click:Connect(function()
+    button.Text = "Searching..."
+    button.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
+    
+    for i = 1, 3 do
+        button.Text = "Try " .. i .. "/3"
+        executeHopper()
+        task.wait(1) -- Jeda antar percobaan
+    end
+    
+    task.wait(2)
+    button.Text = "HOP SERVER"
+    button.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+end)
 
-	-- Melakukan loop 3 kali
-	for i = 1, 3 do
-		button.Text = "Percobaan ke-" .. i
-		local success, err = pcall(exec)
-		
-		if success then
-			button.Text = "Teleporting..."
-			break -- Berhenti jika sudah berhasil eksekusi
-		else
-			warn("Gagal percobaan ke-" .. i .. ": " .. tostring(err))
-			task.wait(0.5) -- Tunggu sebentar sebelum coba server lain
-		end
-	end
-	
-	task.wait(3)
-	button.Text = "HOP SERVER"
-	button.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-end
-
-button.MouseButton1Click:Connect(startMultiHop)
+-- --- FITUR AUTO LOAD SAAT MASUK ---
+-- Karena ini script executor, kamu harus klik 'Execute' lagi di server baru 
+-- ATAU masukkan script ini ke folder 'autoexec' di folder Delta kamu.
+print("Server Hop UI Loaded!")
+executeHopper() -- Jalankan sekali saat pertama kali execute
