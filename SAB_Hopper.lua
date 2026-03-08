@@ -1,76 +1,78 @@
-if not game:IsLoaded() then game.Loaded:Wait() end
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
 
--- BERSIHIN UI LAMA, ANJING! 🐶
-for _, v in pairs(game:GetService("CoreGui"):GetChildren()) do
-    if v:IsA("ScreenGui") and v.Name == "YheezSmartHop" then v:Destroy() end
+local player = Players.LocalPlayer
+local button = script.Parent
+
+-- --- PENGATURAN POSISI (SESUAI KOTAK MERAH) ---
+button.Name = "ServerHopButton"
+button.Size = UDim2.new(0, 160, 0, 35) -- Ukuran pas untuk area atas
+button.Position = UDim2.new(0.02, 0, 0.22, 0) -- Posisi di area kiri atas sesuai screenshot
+button.AnchorPoint = Vector2.new(0, 0.5)
+button.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+button.BorderSizePixel = 0
+button.Text = "HOP SERVER"
+button.TextColor3 = Color3.fromRGB(255, 255, 255)
+button.Font = Enum.Font.GothamBold
+button.TextSize = 14
+button.AutoButtonColor = false -- Kita pakai animasi custom
+
+-- Efek Visual Tambahan
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 6)
+corner.Parent = button
+
+local stroke = Instance.new("UIStroke")
+stroke.Thickness = 1.5
+stroke.Color = Color3.fromRGB(255, 0, 0) -- Warna merah sesuai kotakmu
+stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+stroke.Parent = button
+
+-- --- ANIMASI TOMBOL ---
+button.MouseEnter:Connect(function()
+	TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(60, 0, 0)}):Play()
+	TweenService:Create(stroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(255, 255, 255)}):Play()
+end)
+
+button.MouseLeave:Connect(function()
+	TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(30, 30, 30)}):Play()
+	TweenService:Create(stroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(255, 0, 0)}):Play()
+end)
+
+-- --- LOGIKA SERVER HOP (ANTI SERVER PENUH) ---
+local function findNewServer()
+	button.Text = "Mencari..."
+	
+	local success, result = pcall(function()
+		local url = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Desc&limit=100"
+		return HttpService:JSONDecode(game:HttpGet(url))
+	end)
+
+	if success and result and result.data then
+		local possibleServers = {}
+		
+		for _, server in ipairs(result.data) do
+			-- Pastikan server bukan yang sekarang DAN masih ada slot kosong (minimal sisa 2 slot biar aman)
+			if server.id ~= game.JobId and server.playing <= (server.maxPlayers - 2) then
+				table.insert(possibleServers, server.id)
+			end
+		end
+
+		if #possibleServers > 0 then
+			button.Text = "Teleporting..."
+			-- Memilih server random dari daftar yang tersedia
+			local targetServer = possibleServers[math.random(1, #possibleServers)]
+			TeleportService:TeleportToPlaceInstance(game.PlaceId, targetServer, player)
+		else
+			button.Text = "Server Penuh!"
+			task.wait(1)
+			button.Text = "Coba Lagi"
+		end
+	else
+		button.Text = "Error API"
+	end
 end
 
-local SG = Instance.new("ScreenGui", game:GetService("CoreGui"))
-SG.Name = "YheezSmartHop"
-
-local B = Instance.new("TextButton", SG)
-B.Size = UDim2.new(0, 140, 0, 40)
-B.Position = UDim2.new(0.02, 10, 0.2, 0)
-B.Text = "SMART HOP 🌪️"
-B.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-B.TextColor3 = Color3.new(1, 1, 1)
-B.Font = Enum.Font.GothamBold
-B.TextSize = 12
-Instance.new("UICorner", B)
-
-B.MouseButton1Click:Connect(function()
-    local Http = game:GetService("HttpService")
-    local TPS = game:GetService("TeleportService")
-    
-    B.Text = "MENGAMBIL DATA..."
-    local s, res = pcall(function() 
-        return game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100") 
-    end)
-    
-    if s then
-        local data = Http:JSONDecode(res)
-        local servers = data.data
-        
-        -- KITA ACAK BIAR GAK KENA SERVER AMPAS YANG SAMA TERUS, BABI! 🐷
-        for i = #servers, 2, -1 do
-            local j = math.random(i)
-            servers[i], servers[j] = servers[j], servers[i]
-        end
-        
-        B.Text = "SEARCHING..."
-        
-        -- INI INTI PERTANYAAN LU, KONTOOOL! 🖕💥
-        for _, v in pairs(servers) do
-            if v.playing < v.maxPlayers - 2 and v.id ~= game.JobId then
-                B.Text = "MENCOBA MASUK..."
-                
-                -- SIAPIN AUTO-LOAD BUAT SERVER BARU
-                if queue_on_teleport then
-                    pcall(function()
-                        queue_on_teleport('loadstring(game:HttpGet("https://raw.githubusercontent.com/yheezscript/Server-hoper.lua/main/SAB_Hopper.lua"))()')
-                    end)
-                end
-                
-                -- TELEPORT DENGAN PROTEKSI, KALO GAGAL DIA LANJUT LOOP! 🔄
-                local success = pcall(function()
-                    TPS:TeleportToPlaceInstance(game.PlaceId, v.id, game.Players.LocalPlayer)
-                end)
-                
-                -- KALO BERHASIL (LAYAR ITEM), KITA BERHENTI NYARI.
-                -- KALO GAGAL (SERVER PENUH/DIBATASI), DIA BAKAL LANJUT KE SERVER BERIKUTNYA DI LIST!
-                if success then 
-                    task.wait(2) -- Kasih waktu buat Roblox ngerespon
-                    -- Kalo masih di server lama setelah 2 detik, berarti gagal, lanjut loop!
-                    if game.JobId ~= v.id then
-                        warn("GAGAL MASUK, NYARI SERVER LAIN... 🔄")
-                    else
-                        return 
-                    end
-                end
-            end
-        end
-    end
-    B.Text = "TIDAK ADA SERVER! 💢"
-    task.wait(1)
-    B.Text = "SMART HOP 🌪️"
-end)
+button.MouseButton1Click:Connect(findNewServer)
